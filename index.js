@@ -1,84 +1,141 @@
-// Homework 1
+// Homework 2
 // Roman Kulyk
 
-const reverseString1 = (text) => {
-  return text.split("").reverse().join("");
-};
+/* DONT CHANGE THIS CODE - START */
+function wait(ms = 1000) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
 
-const reverseString2 = (text) => {
-  let result = "";
-  for (let i of text) {
-    result = i + result;
+class Dish {
+  constructor(cookingTime) {
+    this.cookingTime = cookingTime;
   }
-  return result;
-};
 
-const reverseString3 = (text) => {
-  let result = "";
-  for (let i = text.length; i >= 0; --i) {
-    result += text.charAt(i);
+  async cook() {
+    const actualCookingTime = this.cookingTime * (1 + Math.random()) * 100;
+    await wait(actualCookingTime);
+    return this;
   }
-  return result;
-};
+}
+/* DONT CHANGE THIS CODE - END */
 
-const reverseString4 = (text) => {
-  let result = "";
-  for (let i = 0; i < text.length; ++i) {
-    result = text[i] + result;
+class Ingridient {
+  constructor(name, amount) {
+    this.name = name;
+    this.amount = amount;
   }
-  return result;
-};
-
-const reverseString5 = (text) => {
-  let result = "";
-  text.split("").forEach((element) => {
-    result = element + result;
-  });
-  return result;
-};
-
-const reverseString6 = (text) => {
-  return text.split("").reduce((result, letter) => letter + result);
-};
-
-const reverseString7 = (text) => {
-  return text ? reverseString7(text.substr(1)) + text.charAt(0) : text;
-};
-
-const reverseString8 = (text) => {
-  return Array.from(text).reduce((result, letter) => letter + result);
-};
-
-const reverseString9 = (text) => {
-  let result = "";
-  let length = text.length;
-
-  while (length >= 0) {
-    result += text.charAt(length);
-    length -= 1;
+}
+class Bolognese extends Dish {
+  constructor() {
+    super(10);
+    this.ingridients = {
+      spaghetti: 1,
+      tomato: 1,
+    };
   }
-  return result;
-};
+}
 
-const reverseString10 = (text) => {
-  return text
-    .split("")
-    .sort(() => -1)
-    .join("");
-};
+class MashedPotatoes extends Dish {
+  constructor() {
+    super(8);
+    this.ingridients = {
+      potato: 1,
+    };
+  }
+}
 
-const reverseString11 = (text) => {
-  return [...text].reverse().join("");
-};
+class Steak extends Dish {
+  constructor() {
+    super(7);
+    this.ingridients = {
+      meat: 2,
+    };
+  }
+}
 
-console.log(reverseString1("abc"));
-console.log(reverseString2("abc"));
-console.log(reverseString3("abc"));
-console.log(reverseString4("abc"));
-console.log(reverseString5("abc"));
-console.log(reverseString6("abc"));
-console.log(reverseString7("abc"));
-console.log(reverseString8("abc"));
-console.log(reverseString9("abc"));
-console.log(reverseString10("abc"));
-console.log(reverseString11("abc"));
+class SteakAndFries extends Dish {
+  constructor() {
+    super(12);
+    this.ingridients = {
+      meat: 2,
+      potato: 1,
+    };
+  }
+}
+class Kitchen {
+  constructor() {
+    this.fridge = {};
+    this.orders = new Array();
+  }
+
+  addToFridge(ingridients) {
+    ingridients.forEach((ingridient) => {
+      if (ingridient.name in this.fridge) {
+        this.fridge[ingridient.name] += ingridient.amount;
+      } else {
+        this.fridge[ingridient.name] = ingridient.amount;
+      }
+    });
+  }
+
+  order(dish) {
+    for (const [name, amount] of Object.entries(dish.ingridients)) {
+      if (name in this.fridge) {
+        if (this.fridge[name] - amount >= 0) {
+          this.fridge[name] -= amount;
+        } else {
+          throw "Not enough ingridients in fridge";
+        }
+      }
+    }
+    this.orders.push(dish);
+  }
+
+  async cookFastestOrder() {
+    let fastestDish = this.orders[0];
+    this.orders.forEach((dish) => {
+      if (dish.cookingTime < fastestDish.cookingTime) {
+        fastestDish = dish;
+      }
+    });
+    this.orders = this.orders.filter((e) => e !== fastestDish);
+    await fastestDish.cook();
+    return fastestDish;
+  }
+
+  async cookAllOrders() {
+    for (const order of this.orders) {
+      await order.cook();
+    }
+    let allOrders = this.orders;
+    this.orders = new Array();
+    return allOrders;
+  }
+}
+
+async function test() {
+  try {
+    const kitchen = new Kitchen();
+    kitchen.addToFridge([
+      new Ingridient("potato", 1),
+      new Ingridient("spaghetti", 1),
+      new Ingridient("meat", 3),
+      new Ingridient("tomato", 2),
+    ]);
+
+    kitchen.order(new Bolognese()); // Bolognese extends Dish (cookingTime = 10)
+    kitchen.order(new MashedPotatoes()); // MashedPotatoes extends Dish (cookingTime = 8)
+    kitchen.order(new Steak()); // Steak extends Dish (cookingTime = 7)
+
+    // Feel free to experiment with various dishes and ingridients
+
+    await kitchen.cookFastestOrder(); // Returns fastest dish to make
+    await kitchen.cookAllOrders(); // Returns two dishes in array
+
+    kitchen.order(new SteakAndFries()); // Throws Error: Not enough ingridients in fridge
+  } catch (err) {
+    console.error(err);
+  }
+}
+
+test();
