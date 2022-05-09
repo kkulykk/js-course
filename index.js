@@ -1,141 +1,85 @@
-// Homework 2
-// Roman Kulyk
+let box = document.querySelector(".box");
+let boxContainer = document.querySelector(".box-container");
+let size = "small";
+let count = 2;
+let boxAmount = 1;
 
-/* DONT CHANGE THIS CODE - START */
-function wait(ms = 1000) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
+const colors = [
+  "#00F7C6",
+  "#F7B531",
+  "#23453B",
+  "#9E59BA",
+  "#053F1A",
+  "#662EFE",
+  "#87D932",
+  "aqua",
+  "red",
+  "black",
+];
 
-class Dish {
-  constructor(cookingTime) {
-    this.cookingTime = cookingTime;
-  }
-
-  async cook() {
-    const actualCookingTime = this.cookingTime * (1 + Math.random()) * 100;
-    await wait(actualCookingTime);
-    return this;
-  }
-}
-/* DONT CHANGE THIS CODE - END */
-
-class Ingridient {
-  constructor(name, amount) {
-    this.name = name;
-    this.amount = amount;
-  }
-}
-class Bolognese extends Dish {
-  constructor() {
-    super(10);
-    this.ingridients = {
-      spaghetti: 1,
-      tomato: 1,
-    };
-  }
-}
-
-class MashedPotatoes extends Dish {
-  constructor() {
-    super(8);
-    this.ingridients = {
-      potato: 1,
-    };
-  }
-}
-
-class Steak extends Dish {
-  constructor() {
-    super(7);
-    this.ingridients = {
-      meat: 2,
-    };
-  }
-}
-
-class SteakAndFries extends Dish {
-  constructor() {
-    super(12);
-    this.ingridients = {
-      meat: 2,
-      potato: 1,
-    };
-  }
-}
-class Kitchen {
-  constructor() {
-    this.fridge = {};
-    this.orders = new Array();
-  }
-
-  addToFridge(ingridients) {
-    ingridients.forEach((ingridient) => {
-      if (ingridient.name in this.fridge) {
-        this.fridge[ingridient.name] += ingridient.amount;
+const clickHandler = (container) => {
+  container.addEventListener("click", (event) => {
+    if (event.shiftKey) {
+      if (size === "small") {
+        container.classList.add("box-large");
+        size = "large";
       } else {
-        this.fridge[ingridient.name] = ingridient.amount;
-      }
-    });
-  }
-
-  order(dish) {
-    for (const [name, amount] of Object.entries(dish.ingridients)) {
-      if (name in this.fridge) {
-        if (this.fridge[name] - amount >= 0) {
-          this.fridge[name] -= amount;
-        } else {
-          throw "Not enough ingridients in fridge";
-        }
+        container.classList.remove("box-large");
+        size = "small";
       }
     }
-    this.orders.push(dish);
-  }
+  });
+};
 
-  async cookFastestOrder() {
-    let fastestDish = this.orders[0];
-    this.orders.forEach((dish) => {
-      if (dish.cookingTime < fastestDish.cookingTime) {
-        fastestDish = dish;
-      }
-    });
-    this.orders = this.orders.filter((e) => e !== fastestDish);
-    await fastestDish.cook();
-    return fastestDish;
-  }
+const moveHandler = (container) => {
+  container.addEventListener("mousedown", () => {
+    document.addEventListener("mousemove", followCursor);
 
-  async cookAllOrders() {
-    for (const order of this.orders) {
-      await order.cook();
+    function followCursor(event) {
+      container.style.left = event.clientX - container.clientHeight / 2 + "px";
+      container.style.top = event.clientY - container.clientWidth / 2 + "px";
     }
-    let allOrders = this.orders;
-    this.orders = new Array();
-    return allOrders;
-  }
-}
+    
+    document.addEventListener("mouseup", () => {
+      document.removeEventListener("mousemove", followCursor);
+    });
+  });
+};
 
-async function test() {
-  try {
-    const kitchen = new Kitchen();
-    kitchen.addToFridge([
-      new Ingridient("potato", 1),
-      new Ingridient("spaghetti", 1),
-      new Ingridient("meat", 3),
-      new Ingridient("tomato", 2),
-    ]);
+const leftClickHandler = (container) => {
+  container.addEventListener("contextmenu", (event) => {
+    event.preventDefault();
+    color = colors[Math.floor(Math.random() * colors.length)];
+    container.style.backgroundColor = color;
+  });
+};
 
-    kitchen.order(new Bolognese()); // Bolognese extends Dish (cookingTime = 10)
-    kitchen.order(new MashedPotatoes()); // MashedPotatoes extends Dish (cookingTime = 8)
-    kitchen.order(new Steak()); // Steak extends Dish (cookingTime = 7)
+const doubleClickHandler = (container) => {
+  container.addEventListener("dblclick", (event) => {
+    event.preventDefault();
+    if (!event.shiftKey && !event.altKey) {
+      let newElemnt = document.createElement("div");
+      newElemnt.classList.add("box");
+      newElemnt.textContent = count;
+      newElemnt.style.left =
+        container.offsetLeft + container.clientHeight + "px";
+      newElemnt.style.top = container.offsetTop + container.clientWidth + "px";
+      leftClickHandler(newElemnt);
+      moveHandler(newElemnt);
+      clickHandler(newElemnt);
+      doubleClickHandler(newElemnt);
+      boxContainer.appendChild(newElemnt);
+      count += 1;
+      boxAmount += 1;
+    }
+    if (event.altKey && boxAmount > 1) {
+      boxContainer.removeChild(container);
+      boxAmount -= 1;
+    }
+  });
+};
 
-    // Feel free to experiment with various dishes and ingridients
-
-    await kitchen.cookFastestOrder(); // Returns fastest dish to make
-    await kitchen.cookAllOrders(); // Returns two dishes in array
-
-    kitchen.order(new SteakAndFries()); // Throws Error: Not enough ingridients in fridge
-  } catch (err) {
-    console.error(err);
-  }
-}
-
-test();
+leftClickHandler(box);
+moveHandler(box);
+clickHandler(box);
+doubleClickHandler(box);
